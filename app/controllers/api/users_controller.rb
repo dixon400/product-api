@@ -1,4 +1,7 @@
 class Api::UsersController < ApplicationController
+    before_action :authorize
+    skip_before_action :authorize, only: [:create]
+
     def index
         users = User.all
         render json: users, status: 200
@@ -22,13 +25,18 @@ class Api::UsersController < ApplicationController
         if user
           render json: user, status: 200
         else
-          render json: {error: "Category Not Found"}
+          render_not_found_response
         end
       end
 
       def delete
         user = User.find_by(id: params[:id])
-        
+        if(user)
+          user.destroy
+          head :no_content
+        else
+          render_not_found_response
+        end
       end
     
       private
@@ -38,6 +46,12 @@ class Api::UsersController < ApplicationController
             :email
         ])
        end
-        
-
+      
+       def render_not_found_response
+        render json: { error: "Product not found" }, status: :not_found
+      end
+      
+      def authorize
+        return render json: { error: "Not authorized" }, status: :unauthorized unless session.include? :user_id
+      end
 end

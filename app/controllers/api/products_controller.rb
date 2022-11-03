@@ -1,4 +1,6 @@
 class Api::ProductsController < ApplicationController
+    before_action :authorize
+
     def index
         products = Product.all
         render json: products, include: :category, status: 200
@@ -26,10 +28,20 @@ class Api::ProductsController < ApplicationController
         if product
           render json: product, status: 200
         else
-          render json: {error: "Product Not Found"}
+          render_not_found_response
         end
       end
-    
+
+      def destroy
+        product = Product.find_by(id: params[:id])
+        if product
+          product.destroy
+          head :no_content
+        else
+          render_not_found_response
+        end
+      end
+
       private
         def prod_params
           params.require(:product).permit([
@@ -41,4 +53,13 @@ class Api::ProductsController < ApplicationController
             :created_by
         ])
        end
+
+        def render_not_found_response
+          render json: { error: "Product not found" }, status: :not_found
+        end
+
+        def authorize
+          return render json: { error: "Not authorized" }, status: :unauthorized unless session.include? :user_id
+        end
+      
 end

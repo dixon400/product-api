@@ -1,5 +1,8 @@
 class Api::CategoriesController < ApplicationController
-    def index
+      before_action :authorize
+
+  
+      def index
         categories = Category.all
         render json: categories, include: :user,  status: 200
       end
@@ -22,7 +25,7 @@ class Api::CategoriesController < ApplicationController
         if category
           render json: category, status: 200
         else
-          render json: {error: "Category Not Found"}
+          render_not_found_response
         end
       end
     
@@ -34,5 +37,12 @@ class Api::CategoriesController < ApplicationController
         ])
        end
         
+       def render_not_found_response
+        render json: { error: "Category not found" }, status: :not_found
+      end
+
+      def authorize
+        return render json: { error: "Not authorized" }, status: :unauthorized unless session.include? :user_id
+      end
 
 end
